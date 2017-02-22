@@ -1,0 +1,3 @@
+[submodule "dellve_system_manager/dellve_proto"]
+	path = dellve_system_manager/dellve_proto
+	url = https://github.com/dellve/dellve_proto.git/
