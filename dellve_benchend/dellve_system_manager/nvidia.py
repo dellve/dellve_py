@@ -3,7 +3,7 @@ import system_manager
 
 from pynvml import * 
 
-class NvidiaSystemManager(system_manager.Interface):
+class SystemManager(system_manager.Interface):
 
 	def __init__(self):
 		self.device_count = nvmlDeviceGetCount()

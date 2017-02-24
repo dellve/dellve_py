@@ -27,7 +27,7 @@ class BuildProtoModules(setuptools.Command):
 
     def run(self):
         from grpc.tools import command
-        command.build_package_protos('./dellve_system_manager/dellve_proto/')
+        command.build_package_protos('./dellve_benchend/dellve_proto/')
 
 setup(name='dellve',
       version=__version__,
@@ -39,7 +39,24 @@ setup(name='dellve',
       # ext_modules=ext_modules,
       platforms = ['GNU/Linux','Mac OS-X','Unix'],
       install_requires=[
-        'grpcio>=1.1', 
+        # appdirs==1.4.0
+        # dellve==0.0.1
+        # enum34==1.1.6
+        # futures==3.0.5
+        # gevent==1.2.1
+        # greenlet==0.4.12
+        # grpc==0.3.post19
+        # grpcio==1.1.0
+        # grpcio-tools==1.1.0
+        # msgpack-python==0.4.8
+        # packaging==16.8
+        # protobuf==3.2.0
+        # py==1.4.32
+        # pybind11==2.0.1
+        # pyparsing==2.1.10
+        # pytest==3.0.6
+        # six==1.10.0
+        'grpcio', 
         'grpcio-tools>=1.1',
         'pybind11>=1.7', 
         'pytest>=3.0'],
@@ -49,6 +66,6 @@ setup(name='dellve',
         'build_proto_modules': BuildProtoModules},
       packages=[
         # 'dellve',
-        'dellve_system_manager'],
+        'dellve_benchend'],
       tests_require=['pytest'],
       zip_safe=False)
