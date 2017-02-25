@@ -6,51 +6,40 @@ import threading
 import sched
 import time
 import dellve_proto
-# import dellve_system_manager
+import dellve_system_monitor.api
 
 # Select GRPC service
 ServiceAPI = dellve_proto.benchend.BenchendServicer
 
-# # Select prefered system manager
-# SystemManager = dellve_system_manager.nvidia.SystemManager
-# assert issubclass(SystemManager, dellve_system_manager.Api)
-
-# class ServiceProvider(ServiceAPI):
-#     def getServerInfo(self, request, context):
-#         raise NotImplementedError()
-
-#     def startMetricStream(self, request, context):
-#         raise NotImplementedError()
-
-#     def stopMetricStream(self, request, context):
-#         raise NotImplementedError()
-
-class ServiceProviderStub(ServiceAPI):
-    def __init__(self):
+class ServiceProvider(ServiceAPI):
+    def __init__(self, system_monitor=None):
         ServiceAPI.__init__(self)
-        self.stream_on = False
+
+        if not isinstance(system_monitor, dellve_system_monitor.api.API):
+            raise TypeError() # TODO: add error message
+
+        self.system_monitor = system_monitor
+        self.metric_stream_on = False
 
     def getServerInfo(self, request, context):      
         service_info = {
-            "numGpuDevices": 1
+            "numGpuDevices": self.system_monitor.get_num_gpu_devices()
             # Note: add more fields here as API grows
         }
 
         return dellve_proto.types.ServiceInfo(**service_info)
 
     def startMetricStream(self, request, context):
-        self.stream_on = True
+        self.metric_stream_on = True
 
-        metric_stream_data = {
-            'gpuUtil': 100,
-            'memUtil': 100
-        }
-
-        while self.stream_on:
-            yield dellve_proto.types.MetricStreamData(**metric_stream_data)
+        while self.metric_stream_on:
+            yield dellve_proto.types.MetricStreamData(**{
+                'gpuUtil': self.system_monitor.get_gpu_util(0),
+                'memUtil': self.system_monitor.get_mem_util(0)
+            })
 
     def stopMetricStream(self, request, context):
-        self.stream_on = False
+        self.metric_stream_on = False
 
         return dellve_proto.types.Status()
 
@@ -58,11 +47,15 @@ class ServiceProviderStub(ServiceAPI):
 class Service(object):
     def __init__(self, stub=True):
         if stub:
-            self.provider = ServiceProviderStub()
+            import dellve_system_monitor.stub
+            system_monitor = dellve_system_monitor.stub.SystemMonitor()
         else:
-            self.provider = ServiceProvider()
+            import dellve_system_monitor.nvidia
+            system_monitor = dellve_system_monitor.nvidia.SystemMonitor()
 
-    def start(self, url='localhost', port=5555):
+        self.provider = ServiceProvider(system_monitor=system_monitor)
+
+    def start(self, port=5555):
         Executor = concurrent.futures.ThreadPoolExecutor
 
         server = grpc.server(Executor(10))
